@@ -2,6 +2,7 @@ package com.zjianhao.aircon.ui
 
 import android.os.Bundle
 import android.view.View
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -49,7 +50,31 @@ class FrequencyTestActivity : AppCompatActivity() {
     private lateinit var presetAdapter: PresetAdapter
 
     private var selectedFreqHz = ElectraSpec.CARRIER_FREQ_HZ
+    private var profile = CarrierProfile.AUX
     private var supported = false
+
+    /**
+     * 载波频率方案。
+     *
+     * [AUX] 来自实测：奥克斯 KF-26GW/BpR3AQG1(B3) 对 36/38/40kHz 均有响应。
+     * [GENERIC] 回落到本机红外硬件声明的全部载波。
+     */
+    private enum class CarrierProfile(
+        @StringRes val labelRes: Int,
+        val frequencies: List<Int>,
+        @StringRes val descRes: Int
+    ) {
+        AUX(
+            R.string.freq_profile_aux,
+            listOf(36_000, 38_000, 40_000),
+            R.string.freq_profile_aux_desc
+        ),
+        GENERIC(
+            R.string.freq_profile_generic,
+            emptyList(),
+            R.string.freq_profile_generic_desc
+        )
+    }
     private var emittingPreset = false
 
     /** 测试用状态：与默认预设一致，便于对照 */
@@ -96,7 +121,8 @@ class FrequencyTestActivity : AppCompatActivity() {
             override fun onTabReselected(tab: TabLayout.Tab) = Unit
         })
 
-        buildFrequencyChips()
+        buildProfileChips()
+        selectProfile(CarrierProfile.AUX)
         checkIrHardware()
         showSection(binding.tabs.selectedTabPosition.coerceAtLeast(0))
 
@@ -144,10 +170,33 @@ class FrequencyTestActivity : AppCompatActivity() {
         }
     }
 
+    private fun buildProfileChips() {
+        binding.profileChipGroup.removeAllViews()
+        CarrierProfile.entries.forEach { p ->
+            val chip = Chip(this).apply {
+                text = getString(p.labelRes)
+                isCheckable = true
+                isChecked = p == profile
+                setOnClickListener { selectProfile(p) }
+            }
+            binding.profileChipGroup.addView(chip)
+        }
+    }
+
+    private fun selectProfile(target: CarrierProfile) {
+        profile = target
+        binding.profileDesc.setText(target.descRes)
+        buildProfileChips()
+        buildFrequencyChips()
+    }
+
     private fun buildFrequencyChips() {
         val candidates = candidateFrequencies()
-        binding.freqChipGroup.removeAllViews()
+        if (selectedFreqHz !in candidates) {
+            selectedFreqHz = candidates.firstOrNull() ?: ElectraSpec.CARRIER_FREQ_HZ
+        }
 
+        binding.freqChipGroup.removeAllViews()
         candidates.forEach { freq ->
             val chip = Chip(this).apply {
                 text = labelOf(freq)
@@ -160,16 +209,18 @@ class FrequencyTestActivity : AppCompatActivity() {
         updateSelectedLabel()
     }
 
-    /** 优先使用硬件实际支持的载波，取不到时退回 38kHz。 */
+    /** 品牌方案给定频率时优先用方案，否则回落到硬件声明的载波。 */
     private fun candidateFrequencies(): List<Int> {
+        if (profile.frequencies.isNotEmpty()) return profile.frequencies
+
         val availability = transmitter.availability()
         val fromHardware = if (availability is IrAvailability.Available) {
             availability.carrierRanges.map { it.first }.filter { it > 0 }
         } else {
             emptyList()
         }
-        val merged = (fromHardware + ElectraSpec.CARRIER_FREQ_HZ).distinct().sorted()
-        return if (merged.isEmpty()) listOf(ElectraSpec.CARRIER_FREQ_HZ) else merged
+        return (fromHardware + ElectraSpec.CARRIER_FREQ_HZ).distinct().sorted()
+            .ifEmpty { listOf(ElectraSpec.CARRIER_FREQ_HZ) }
     }
 
     private fun selectFrequency(freq: Int) {

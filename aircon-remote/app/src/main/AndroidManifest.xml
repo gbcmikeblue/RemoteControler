@@ -3,22 +3,17 @@
 
     <!-- 需求 4.2：TRANSMIT_IR 为普通权限，安装即授予 -->
     <uses-permission android:name="android.permission.TRANSMIT_IR" />
+    <!-- 定时关机：到点由系统唤醒并在后台发码，无需 App 保持运行 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Android 13+ 上 SCHEDULE_EXACT_ALARM 默认不授予且需用户手动开启，
+         这里声明 USE_EXACT_ALARM 让安装即生效，保证「运行 N 小时后关机」按点触发 -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <!-- 需求 4.2：无红外设备的手机也应能安装，运行时再提示不支持 -->
     <uses-feature
         android:name="android.hardware.consumerir"
         android:required="false" />
 
-    <!-- Android 11+ 包可见性：配置检测需要枚举已安装的遥控类应用 -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent>
-        <package android:name="com.duokan.phone.remotecontroller" />
-        <package android:name="com.xiaomi.mitv.remotecontroller" />
-        <package android:name="com.tiqiaa.remote" />
-    </queries>
 
     <application
         android:allowBackup="true"
@@ -45,8 +40,8 @@
             android:name=".ui.FrequencyTestActivity"
             android:exported="false" />
 
-        <activity
-            android:name=".ui.RemoteConfigCheckActivity"
+        <receiver
+            android:name=".ir.AutoOffReceiver"
             android:exported="false" />
     </application>
 

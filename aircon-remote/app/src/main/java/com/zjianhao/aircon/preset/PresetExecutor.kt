@@ -58,16 +58,6 @@ class PresetExecutor(private val transmitter: IrTransmitter) {
         TransmitResult.Success
     }
 
-    /** 定时到点后发送关机状态帧（Electra 无定时码，只能本地倒计时）。 */
-    suspend fun sendPowerOff(preset: Preset): TransmitResult = withContext(Dispatchers.Default) {
-        val pattern = ElectraCodec.stateToPattern(
-            preset.state.copy(power = false, autoOffHours = 0)
-        )
-        val result = transmitter.transmit(preset.carrierFreqHz, pattern)
-        Log.i(TAG, "auto-off fired, result=$result")
-        result
-    }
-
     private fun buildCommands(preset: Preset): List<Command> =
         if (preset.usesCalibratedRaw) {
             preset.rawCommands.mapIndexed { index, pattern ->

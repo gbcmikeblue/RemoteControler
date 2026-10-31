@@ -1,7 +1,10 @@
 package com.zjianhao.aircon.ui
 
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -12,15 +15,19 @@ import com.google.android.material.snackbar.Snackbar
 import com.zjianhao.aircon.BuildConfig
 import com.zjianhao.aircon.R
 import com.zjianhao.aircon.databinding.ActivityMainBinding
+import com.zjianhao.aircon.ir.AutoOffScheduler
 import com.zjianhao.aircon.ir.IrAvailability
 import com.zjianhao.aircon.ir.IrTransmitter
 import com.zjianhao.aircon.ir.TransmitResult
+import com.zjianhao.aircon.ir.electra.ElectraCodec
+import com.zjianhao.aircon.ir.electra.ElectraSpec
+import com.zjianhao.aircon.ir.electra.ElectraState
 import com.zjianhao.aircon.preset.Preset
 import com.zjianhao.aircon.preset.PresetExecutor
 import com.zjianhao.aircon.preset.PresetStore
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,7 +39,6 @@ class MainActivity : AppCompatActivity() {
 
     private var emitting = false
     private var supported = false
-    private var autoOffJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,20 +62,35 @@ class MainActivity : AppCompatActivity() {
         binding.btnFrequencyTest.setOnClickListener {
             startActivity(Intent(this, FrequencyTestActivity::class.java))
         }
-        binding.btnConfigCheck.setOnClickListener {
-            startActivity(Intent(this, RemoteConfigCheckActivity::class.java))
-        }
+        binding.btnPowerOff.setOnClickListener { powerOff() }
 
         checkIrHardware()
         handleDebugNavigation()
         handleDebugEmit()
+        handleDebugAutoOff()
+    }
+
+    /** 仅 debug 包：`--el debug_auto_off_seconds 15` 用极短延时验证后台到点发射链路。 */
+    private fun handleDebugAutoOff() {
+        if (!BuildConfig.DEBUG) return
+        val seconds = intent.getLongExtra(EXTRA_DEBUG_AUTO_OFF_SECONDS, 0L)
+        if (seconds <= 0) return
+
+        val preset = store.find(1L) ?: return
+        val offPattern = ElectraCodec.stateToPattern(
+            preset.state.copy(power = false, autoOffMinutes = 0)
+        )
+        val result = AutoOffScheduler.schedule(
+            this, seconds * 1000L, preset.carrierFreqHz, offPattern
+        )
+        Log.i(TAG, "debug auto-off scheduled in ${seconds}s, result=$result")
     }
 
     /** 仅 debug 包可用：`am start ... --es debug_open frequency_test` 直接跳转频率测试页。 */
     private fun handleDebugNavigation() {
         if (!BuildConfig.DEBUG) return
-        if (intent.getStringExtra(EXTRA_DEBUG_OPEN) == "config_check") {
-            startActivity(Intent(this, RemoteConfigCheckActivity::class.java))
+        if (intent.getStringExtra(EXTRA_DEBUG_OPEN) == "preset_edit") {
+            startActivity(Intent(this, PresetEditActivity::class.java))
             return
         }
         if (intent.getStringExtra(EXTRA_DEBUG_OPEN) == "frequency_test") {
@@ -93,6 +114,10 @@ class MainActivity : AppCompatActivity() {
      */
     private fun handleDebugEmit() {
         if (!BuildConfig.DEBUG) return
+        if (intent.getBooleanExtra("debug_power_off", false)) {
+            binding.root.post { powerOff() }
+            return
+        }
         val presetId = intent.getLongExtra(EXTRA_DEBUG_EMIT_PRESET, -1L)
         if (presetId <= 0) return
 
@@ -173,31 +198,46 @@ class MainActivity : AppCompatActivity() {
             snack(binding.emitStatus.text.toString())
             emitting = false
 
-            if (result == TransmitResult.Success && preset.state.autoOffHours > 0) {
-                scheduleAutoOff(preset)
+            if (result == TransmitResult.Success) {
+                updateAutoOff(preset)
             }
         }
     }
 
     /**
-     * Electra 协议没有定时关机码，只能由 App 倒计时到点再发一帧关机状态。
-     * 注意：倒计时跟随界面生命周期，退出 App 后会失效。
+     * Electra 协议没有定时关机码，无法让空调自己计时。
+     * 这里的「运行 N 小时后关机」通过系统闹钟在到点时唤醒 App 发一帧关机状态，
+     * App 可以被切到后台甚至被回收，不需要一直运行。
      */
-    private fun scheduleAutoOff(preset: Preset) {
-        val hours = preset.state.autoOffHours
-        autoOffJob?.cancel()
-        binding.emitStatus.text = getString(R.string.auto_off_scheduled, hours)
-        snack(getString(R.string.auto_off_scheduled, hours))
-
-        autoOffJob = lifecycleScope.launch {
-            delay(hours * 60L * 60L * 1000L)
-            val result = executor.sendPowerOff(preset)
-            binding.emitStatus.text = when (result) {
-                TransmitResult.Success -> getString(R.string.auto_off_fired, hours)
-                is TransmitResult.Failure -> getString(R.string.emit_failed, result.reason)
-            }
-            snack(binding.emitStatus.text.toString())
+    private fun updateAutoOff(preset: Preset) {
+        val minutes = preset.state.autoOffMinutes
+        if (minutes <= 0) {
+            AutoOffScheduler.cancel(this)
+            return
         }
+
+        val offPattern = ElectraCodec.stateToPattern(
+            preset.state.copy(power = false, autoOffMinutes = 0)
+        )
+        val duration = ElectraState.formatDuration(minutes)
+
+        val text = when (
+            AutoOffScheduler.schedule(this, minutes * 60_000L, preset.carrierFreqHz, offPattern)
+        ) {
+            AutoOffScheduler.Result.EXACT -> getString(R.string.auto_off_scheduled, duration)
+
+            AutoOffScheduler.Result.INEXACT -> {
+                val msg = getString(R.string.auto_off_scheduled_inexact, duration)
+                Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.grant_exact_alarm) { openExactAlarmSettings() }
+                    .show()
+                msg
+            }
+
+            AutoOffScheduler.Result.FAILED -> getString(R.string.auto_off_schedule_failed)
+        }
+        binding.emitStatus.text = text
+        snack(text)
     }
 
     private fun confirmDelete(preset: Preset) {
@@ -212,6 +252,49 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    /**
+     * 一键关机：沿用最近一条预设的温度/模式/风速，只把电源位清零。
+     * 同时撤销已登记的定时任务，避免到点再发一次关机。
+     */
+    private fun powerOff() {
+        if (!supported) {
+            snack(getString(R.string.ir_not_supported_block))
+            return
+        }
+        val base = store.load().firstOrNull()
+        val state = (base?.state ?: ElectraState()).copy(power = false, autoOffMinutes = 0)
+        val carrier = base?.carrierFreqHz ?: ElectraSpec.CARRIER_FREQ_HZ
+
+        lifecycleScope.launch {
+            val pattern = ElectraCodec.stateToPattern(state)
+            val result = withContext(Dispatchers.Default) {
+                transmitter.transmit(carrier, pattern)
+            }
+            AutoOffScheduler.cancel(this@MainActivity)
+
+            val text = when (result) {
+                TransmitResult.Success -> getString(R.string.power_off_done)
+                is TransmitResult.Failure -> getString(R.string.power_off_failed, result.reason)
+            }
+            binding.emitStatus.visibility = View.VISIBLE
+            binding.emitStatus.text = text
+            snack(text)
+        }
+    }
+
+    /** 引导用户为「定时关机」开启精确闹钟权限。 */
+    private fun openExactAlarmSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        runCatching {
+            startActivity(
+                Intent(
+                    Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                    Uri.parse("package:$packageName")
+                )
+            )
+        }
+    }
+
     private fun snack(message: String) {
         Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
     }
@@ -220,5 +303,6 @@ class MainActivity : AppCompatActivity() {
         const val TAG = "MainActivity"
         const val EXTRA_DEBUG_EMIT_PRESET = "debug_emit_preset_id"
         const val EXTRA_DEBUG_OPEN = "debug_open"
+        const val EXTRA_DEBUG_AUTO_OFF_SECONDS = "debug_auto_off_seconds"
     }
 }

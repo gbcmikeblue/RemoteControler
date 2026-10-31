@@ -67,9 +67,9 @@ class ElectraCodecTest {
         val min = ElectraCodec.encode(base.copy(temperature = 16))
         assertEquals(8, (min[1].toInt() shr 3) and 0x1F)
 
-        // 32℃ → 24
-        val max = ElectraCodec.encode(base.copy(temperature = 32))
-        assertEquals(24, (max[1].toInt() shr 3) and 0x1F)
+        // 30℃（上限）→ 22
+        val max = ElectraCodec.encode(base.copy(temperature = 30))
+        assertEquals(22, (max[1].toInt() shr 3) and 0x1F)
     }
 
     @Test

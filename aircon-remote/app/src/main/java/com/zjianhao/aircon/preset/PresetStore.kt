@@ -83,7 +83,7 @@ class PresetStore(context: Context) {
             put("clean", preset.state.clean)
             put("lightToggle", preset.state.lightToggle)
             preset.state.sensorTemperature?.let { put("sensorTemperature", it) }
-            put("autoOffHours", preset.state.autoOffHours)
+            put("autoOffMinutes", preset.state.autoOffMinutes)
         })
         if (preset.rawCommands.isNotEmpty()) {
             put("raw", JSONArray().apply {
@@ -110,8 +110,12 @@ class PresetStore(context: Context) {
             clean = s.optBoolean("clean", false),
             lightToggle = s.optInt("lightToggle", ElectraSpec.LIGHT_TOGGLE_OFF),
             sensorTemperature = if (s.has("sensorTemperature")) s.optInt("sensorTemperature") else null,
-            // 兼容旧版本字段名 timerOffHours
-            autoOffHours = s.optInt("autoOffHours", s.optInt("timerOffHours", 0))
+            // 兼容历史字段：autoOffHours / timerOffHours 都是小时，转成分钟
+            autoOffMinutes = when {
+                s.has("autoOffMinutes") -> s.optInt("autoOffMinutes", 0)
+                s.has("autoOffHours") -> s.optInt("autoOffHours", 0) * 60
+                else -> s.optInt("timerOffHours", 0) * 60
+            }
         )
 
         val rawArray = json.optJSONArray("raw")
@@ -142,7 +146,7 @@ class PresetStore(context: Context) {
                 temperature = 26,
                 fan = FanSpeed.AUTO,
                 quiet = true,
-                autoOffHours = 2
+                autoOffMinutes = 120
             )
         )
     )

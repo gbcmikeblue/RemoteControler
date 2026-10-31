@@ -35,7 +35,7 @@ class IrHardwareInstrumentedTest {
         temperature = 26,
         fan = FanSpeed.AUTO,
         quiet = true,
-        autoOffHours = 2
+        autoOffMinutes = 120
     )
 
     @Test

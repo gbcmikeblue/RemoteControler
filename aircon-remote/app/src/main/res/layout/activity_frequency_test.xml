@@ -64,6 +64,30 @@
                 android:textColor="@color/on_surface_secondary"
                 android:textSize="13sp" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/freq_profile_label"
+                android:textColor="@color/on_surface"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/profileChipGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:singleSelection="true" />
+
+            <TextView
+                android:id="@+id/profileDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/on_surface_secondary"
+                android:textSize="12sp" />
+
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/freqChipGroup"
                 android:layout_width="match_parent"

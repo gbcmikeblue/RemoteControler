@@ -49,25 +49,39 @@ data class ElectraState(
     val lightToggle: Int = ElectraSpec.LIGHT_TOGGLE_OFF,
     /** 传感器温度（℃）。null 表示不写入该字节 */
     val sensorTemperature: Int? = null,
-    /** App 内倒计时关机小时数，0 表示不定时 */
-    val autoOffHours: Int = 0
+    /** 运行多少分钟后自动关机（系统闹钟，0 表示不定时） */
+    val autoOffMinutes: Int = 0
 ) {
     fun sanitized(): ElectraState = copy(
         temperature = temperature.coerceIn(ElectraSpec.MIN_TEMP, ElectraSpec.MAX_TEMP),
-        autoOffHours = autoOffHours.coerceIn(0, ElectraSpec.MAX_AUTO_OFF_HOURS),
+        autoOffMinutes = autoOffMinutes.coerceIn(0, ElectraSpec.MAX_AUTO_OFF_MINUTES),
         sensorTemperature = sensorTemperature?.coerceIn(
             ElectraSpec.SENSOR_MIN_TEMP, ElectraSpec.SENSOR_MAX_TEMP
         )
     )
 
-    /** 列表摘要，例如「制冷 · 26℃ · 静音 · 2 小时后关(App)」 */
+    /** 列表摘要，例如「制冷 · 26℃ · 静音 · 运行 2 小时后关」 */
     fun summary(): String {
         val parts = mutableListOf<String>()
         parts += mode.label
         parts += "${temperature}℃"
         if (quiet) parts += "静音"
         if (swingVertical || swingHorizontal) parts += "扫风"
-        parts += if (autoOffHours > 0) "${autoOffHours} 小时后关（App 倒计时）" else "不定时"
+        parts += if (autoOffMinutes > 0) "运行 ${formatDuration(autoOffMinutes)}后关" else "不定时"
         return parts.joinToString(" · ")
+    }
+
+    companion object {
+        /** 把分钟数格式化成「30 分钟」「1 小时 30 分钟」「2 小时」 */
+        fun formatDuration(minutes: Int): String {
+            if (minutes <= 0) return "0 分钟"
+            val hours = minutes / 60
+            val mins = minutes % 60
+            return when {
+                hours == 0 -> "$mins 分钟"
+                mins == 0 -> "$hours 小时"
+                else -> "$hours 小时 $mins 分钟"
+            }
+        }
     }
 }

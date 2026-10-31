@@ -91,21 +91,21 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnFrequencyTest"
+                    android:id="@+id/btnPowerOff"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/menu_frequency_test" />
+                    android:text="@string/action_power_off" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnConfigCheck"
+                    android:id="@+id/btnFrequencyTest"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:layout_weight="1"
-                    android:text="@string/menu_config_check" />
+                    android:text="@string/menu_frequency_test" />
             </LinearLayout>
 
             <TextView

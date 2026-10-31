@@ -56,7 +56,7 @@ class PresetEditActivity : AppCompatActivity() {
 
     private fun setupSliders() {
         binding.tempSeek.max = ElectraSpec.MAX_TEMP - ElectraSpec.MIN_TEMP
-        binding.timerSeek.max = ElectraSpec.MAX_AUTO_OFF_HOURS
+        binding.timerSeek.max = ElectraSpec.MAX_AUTO_OFF_MINUTES / ElectraSpec.AUTO_OFF_STEP_MINUTES
 
         binding.tempSeek.setOnSeekBarChangeListener(
             SimpleSeekListener { progress ->
@@ -65,13 +65,7 @@ class PresetEditActivity : AppCompatActivity() {
             }
         )
         binding.timerSeek.setOnSeekBarChangeListener(
-            SimpleSeekListener { progress ->
-                binding.timerLabel.text = if (progress == 0) {
-                    getString(R.string.timer_none)
-                } else {
-                    getString(R.string.timer_value, progress)
-                }
-            }
+            SimpleSeekListener { progress -> updateTimerLabel(minutesOf(progress)) }
         )
 
         binding.saveButton.setOnClickListener { save() }
@@ -84,21 +78,32 @@ class PresetEditActivity : AppCompatActivity() {
             temperature = 26,
             fan = FanSpeed.AUTO,
             quiet = true,
-            autoOffHours = 2
+            autoOffMinutes = 120
         )
 
         binding.nameInput.setText(preset?.name ?: getString(R.string.preset_default_name))
         binding.modeSpinner.setSelection(modes.indexOfFirst { it == state.mode }.coerceAtLeast(0))
         binding.fanSpinner.setSelection(fans.indexOfFirst { it == state.fan }.coerceAtLeast(0))
         binding.tempSeek.progress = state.temperature - ElectraSpec.MIN_TEMP
-        binding.timerSeek.progress = state.autoOffHours
+        binding.timerSeek.progress = state.autoOffMinutes / ElectraSpec.AUTO_OFF_STEP_MINUTES
         binding.sleepSwitch.isChecked = state.quiet
+        binding.swingVSwitch.isChecked = state.swingVertical
+        binding.swingHSwitch.isChecked = state.swingHorizontal
+        binding.turboSwitch.isChecked = state.turbo
+        binding.cleanSwitch.isChecked = state.clean
+        binding.lightSwitch.isChecked = state.lightToggle != ElectraSpec.LIGHT_TOGGLE_OFF
 
         binding.tempLabel.text = getString(R.string.temp_value, state.temperature)
-        binding.timerLabel.text = if (state.autoOffHours == 0) {
+        updateTimerLabel(state.autoOffMinutes)
+    }
+
+    private fun minutesOf(progress: Int): Int = progress * ElectraSpec.AUTO_OFF_STEP_MINUTES
+
+    private fun updateTimerLabel(minutes: Int) {
+        binding.timerLabel.text = if (minutes <= 0) {
             getString(R.string.timer_none)
         } else {
-            getString(R.string.timer_value, state.autoOffHours)
+            getString(R.string.timer_value, ElectraState.formatDuration(minutes))
         }
     }
 
@@ -115,11 +120,17 @@ class PresetEditActivity : AppCompatActivity() {
             temperature = ElectraSpec.MIN_TEMP + binding.tempSeek.progress,
             fan = fans[binding.fanSpinner.selectedItemPosition],
             quiet = binding.sleepSwitch.isChecked,
-            swingVertical = original?.state?.swingVertical ?: false,
-            swingHorizontal = original?.state?.swingHorizontal ?: false,
+            swingVertical = binding.swingVSwitch.isChecked,
+            swingHorizontal = binding.swingHSwitch.isChecked,
+            turbo = binding.turboSwitch.isChecked,
+            clean = binding.cleanSwitch.isChecked,
             iFeel = original?.state?.iFeel ?: false,
-            lightToggle = original?.state?.lightToggle ?: ElectraSpec.LIGHT_TOGGLE_OFF,
-            autoOffHours = binding.timerSeek.progress
+            lightToggle = if (binding.lightSwitch.isChecked) {
+                ElectraSpec.LIGHT_TOGGLE_ON
+            } else {
+                ElectraSpec.LIGHT_TOGGLE_OFF
+            },
+            autoOffMinutes = minutesOf(binding.timerSeek.progress)
         ).sanitized()
 
         val preset = Preset(

@@ -101,6 +101,41 @@
                 android:layout_marginTop="16dp"
                 android:text="@string/label_sleep" />
 
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swingVSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/label_swing_v" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swingHSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/label_swing_h" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/turboSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/label_turbo" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/cleanSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/label_clean" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/lightSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/label_light" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/saveButton"
                 android:layout_width="match_parent"

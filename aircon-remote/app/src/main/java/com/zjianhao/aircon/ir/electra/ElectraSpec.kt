@@ -47,8 +47,9 @@ object ElectraSpec {
     const val MESSAGE_GAP_US = 10_000
 
     // ---- 温度：编码值 = 温度 - 8，5 位 ----
+    // 协议位宽支持到 32℃，但按机型实际能力收敛到 16–30℃（见需求文档 Q2）
     const val MIN_TEMP = 16
-    const val MAX_TEMP = 32
+    const val MAX_TEMP = 30
     const val TEMP_DELTA = 8
 
     // ---- 传感器温度：编码值 = 温度 + 0x4A ----
@@ -56,8 +57,11 @@ object ElectraSpec {
     const val SENSOR_MIN_TEMP = 0
     const val SENSOR_MAX_TEMP = 50
 
-    /** App 内倒计时上限（非协议字段） */
-    const val MAX_AUTO_OFF_HOURS = 12
+    /** 定时关机上限（非协议字段，系统闹钟实现） */
+    const val MAX_AUTO_OFF_MINUTES = 12 * 60
+
+    /** 定时关机步长，用户提到半小时/1.5 小时这种粒度 */
+    const val AUTO_OFF_STEP_MINUTES = 30
 
     // ---- 位域 ----
     val SWING_VERTICAL = Field(byteIndex = 1, bitOffset = 0, bitWidth = 3)
@@ -81,4 +85,5 @@ object ElectraSpec {
     const val SWING_OFF = 0b111
 
     const val LIGHT_TOGGLE_OFF = 0x08
+    const val LIGHT_TOGGLE_ON = 0x15
 }
