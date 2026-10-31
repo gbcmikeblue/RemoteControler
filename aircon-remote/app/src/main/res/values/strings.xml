@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">空调一键预设</string>
+
+    <!-- 红外硬件检测 -->
+    <string name="ir_checking">正在检测红外硬件…</string>
+    <string name="ir_ready">红外发射器可用</string>
+    <string name="ir_ready_detail">支持载波：%1$s</string>
+    <string name="ir_ready_detail_no_range">支持载波：未知范围</string>
+    <string name="ir_unsupported_api">系统版本过低</string>
+    <string name="ir_unsupported_api_detail">红外发射需要 Android 4.4（API 19）及以上版本。</string>
+    <string name="ir_no_emitter">本机没有红外发射器</string>
+    <string name="ir_no_emitter_detail">该手机不支持红外发射，无法控制空调。应用可以安装，但无法发送任何红外指令。</string>
+    <string name="ir_not_supported_block">本机不支持红外发射，无法执行</string>
+
+    <!-- 对准引导 / 开环提示 -->
+    <string name="aim_hint">请将手机红外发射口正对空调接收窗，距离 3 米内，中间不要有遮挡。\n空调是单向红外设备，App 无法确认执行结果——听到空调「嘀」一声即为成功。</string>
+
+    <!-- 预设 -->
+    <string name="my_presets">我的预设</string>
+    <string name="emit">一键发射</string>
+    <string name="emit_starting">正在发射「%1$s」</string>
+    <string name="emit_done">发射完成，请听到「嘀」声后确认</string>
+    <string name="emit_failed">发射失败：%1$s</string>
+    <string name="emit_busy">上一次发射还未结束</string>
+    <string name="preset_load_failed">读取预设失败：%1$s</string>
+    <string name="preset_delete_title">删除预设</string>
+    <string name="preset_delete_message">确定删除「%1$s」？</string>
+    <string name="preset_raw_hint">已使用实测波形覆盖协议编码</string>
+
+    <string name="preset_title">预设</string>
+    <string name="preset_new_title">新建预设</string>
+    <string name="preset_default_name">睡眠 26℃ 2 小时后关</string>
+    <string name="preset_name_required">请填写预设名称</string>
+
+    <string name="label_name">预设名称</string>
+    <string name="label_mode">运行模式</string>
+    <string name="label_fan">风速</string>
+    <string name="label_sleep">睡眠模式</string>
+    <string name="temp_value">温度：%1$d℃</string>
+    <string name="timer_value">定时：%1$d 小时后自动关机</string>
+    <string name="timer_none">定时：不自动关机</string>
+
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="delete">删除</string>
+</resources>
