@@ -10,7 +10,6 @@ import com.zjianhao.aircon.ir.electra.AcMode
 import com.zjianhao.aircon.ir.electra.ElectraSpec
 import com.zjianhao.aircon.ir.electra.ElectraState
 import com.zjianhao.aircon.ir.electra.FanSpeed
-import com.zjianhao.aircon.preset.EmitMode
 import com.zjianhao.aircon.preset.Preset
 import com.zjianhao.aircon.preset.PresetStore
 
@@ -32,6 +31,8 @@ class PresetEditActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityPresetEditBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        WindowInsetsHelper.fitToolbarToStatusBar(binding.toolbar)
+        WindowInsetsHelper.fitBottomInset(binding.root)
         binding.toolbar.setNavigationOnClickListener { finish() }
 
         store = PresetStore(this)
@@ -55,7 +56,7 @@ class PresetEditActivity : AppCompatActivity() {
 
     private fun setupSliders() {
         binding.tempSeek.max = ElectraSpec.MAX_TEMP - ElectraSpec.MIN_TEMP
-        binding.timerSeek.max = ElectraSpec.MAX_TIMER_HOURS
+        binding.timerSeek.max = ElectraSpec.MAX_AUTO_OFF_HOURS
 
         binding.tempSeek.setOnSeekBarChangeListener(
             SimpleSeekListener { progress ->
@@ -82,22 +83,22 @@ class PresetEditActivity : AppCompatActivity() {
             mode = AcMode.COOL,
             temperature = 26,
             fan = FanSpeed.AUTO,
-            sleep = true,
-            timerOffHours = 2
+            quiet = true,
+            autoOffHours = 2
         )
 
         binding.nameInput.setText(preset?.name ?: getString(R.string.preset_default_name))
         binding.modeSpinner.setSelection(modes.indexOfFirst { it == state.mode }.coerceAtLeast(0))
         binding.fanSpinner.setSelection(fans.indexOfFirst { it == state.fan }.coerceAtLeast(0))
         binding.tempSeek.progress = state.temperature - ElectraSpec.MIN_TEMP
-        binding.timerSeek.progress = state.timerOffHours
-        binding.sleepSwitch.isChecked = state.sleep
+        binding.timerSeek.progress = state.autoOffHours
+        binding.sleepSwitch.isChecked = state.quiet
 
         binding.tempLabel.text = getString(R.string.temp_value, state.temperature)
-        binding.timerLabel.text = if (state.timerOffHours == 0) {
+        binding.timerLabel.text = if (state.autoOffHours == 0) {
             getString(R.string.timer_none)
         } else {
-            getString(R.string.timer_value, state.timerOffHours)
+            getString(R.string.timer_value, state.autoOffHours)
         }
     }
 
@@ -113,16 +114,19 @@ class PresetEditActivity : AppCompatActivity() {
             mode = modes[binding.modeSpinner.selectedItemPosition],
             temperature = ElectraSpec.MIN_TEMP + binding.tempSeek.progress,
             fan = fans[binding.fanSpinner.selectedItemPosition],
-            sleep = binding.sleepSwitch.isChecked,
-            swing = original?.state?.swing ?: false,
-            timerOffHours = binding.timerSeek.progress
+            quiet = binding.sleepSwitch.isChecked,
+            swingVertical = original?.state?.swingVertical ?: false,
+            swingHorizontal = original?.state?.swingHorizontal ?: false,
+            iFeel = original?.state?.iFeel ?: false,
+            lightToggle = original?.state?.lightToggle ?: ElectraSpec.LIGHT_TOGGLE_OFF,
+            autoOffHours = binding.timerSeek.progress
         ).sanitized()
 
         val preset = Preset(
             id = editingId,
             name = name,
             state = state,
-            emitMode = original?.emitMode ?: EmitMode.SEQUENTIAL,
+            carrierFreqHz = original?.carrierFreqHz ?: ElectraSpec.CARRIER_FREQ_HZ,
             // 编辑表单不修改实测波形，保留原值避免误丢校准数据
             rawCommands = original?.rawCommands ?: emptyList()
         )

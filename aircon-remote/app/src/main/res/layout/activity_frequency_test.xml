@@ -45,13 +45,17 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- ① 测试 -->
+        <!-- ① 测试：顶部留白，避免内容紧贴 Tab 栏 -->
         <LinearLayout
             android:id="@+id/sectionTest"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingStart="20dp"
+            android:paddingTop="28dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp">
 
             <TextView
                 android:layout_width="match_parent"
@@ -97,8 +101,12 @@
             android:id="@+id/sectionRecords"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
             android:orientation="vertical"
-            android:padding="16dp"
+            android:paddingStart="20dp"
+            android:paddingTop="28dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp"
             android:visibility="gone">
 
             <TextView
@@ -131,8 +139,12 @@
             android:id="@+id/sectionPresets"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
             android:orientation="vertical"
-            android:padding="16dp"
+            android:paddingStart="20dp"
+            android:paddingTop="28dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp"
             android:visibility="gone">
 
             <TextView

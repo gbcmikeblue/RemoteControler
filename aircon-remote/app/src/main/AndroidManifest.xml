@@ -9,6 +9,17 @@
         android:name="android.hardware.consumerir"
         android:required="false" />
 
+    <!-- Android 11+ 包可见性：配置检测需要枚举已安装的遥控类应用 -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <package android:name="com.duokan.phone.remotecontroller" />
+        <package android:name="com.xiaomi.mitv.remotecontroller" />
+        <package android:name="com.tiqiaa.remote" />
+    </queries>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -32,6 +43,10 @@
 
         <activity
             android:name=".ui.FrequencyTestActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.RemoteConfigCheckActivity"
             android:exported="false" />
     </application>
 

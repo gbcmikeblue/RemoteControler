@@ -34,8 +34,8 @@ class IrHardwareInstrumentedTest {
         mode = AcMode.COOL,
         temperature = 26,
         fan = FanSpeed.AUTO,
-        sleep = true,
-        timerOffHours = 2
+        quiet = true,
+        autoOffHours = 2
     )
 
     @Test

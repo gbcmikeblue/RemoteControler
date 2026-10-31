@@ -21,7 +21,6 @@ import com.zjianhao.aircon.ir.electra.ElectraCodec
 import com.zjianhao.aircon.ir.electra.ElectraSpec
 import com.zjianhao.aircon.ir.electra.ElectraState
 import com.zjianhao.aircon.ir.electra.FanSpeed
-import com.zjianhao.aircon.preset.EmitMode
 import com.zjianhao.aircon.preset.FrequencyRecordStore
 import com.zjianhao.aircon.preset.IrFrequencyRecord
 import com.zjianhao.aircon.preset.Preset
@@ -59,14 +58,15 @@ class FrequencyTestActivity : AppCompatActivity() {
         mode = AcMode.COOL,
         temperature = 26,
         fan = FanSpeed.AUTO,
-        sleep = true,
-        timerOffHours = 2
+        quiet = true
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityFrequencyTestBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        WindowInsetsHelper.fitToolbarToStatusBar(binding.toolbar)
+        WindowInsetsHelper.fitBottomInset(binding.root)
         binding.toolbar.setNavigationOnClickListener { finish() }
 
         transmitter = IrTransmitter(this)
@@ -279,7 +279,6 @@ class FrequencyTestActivity : AppCompatActivity() {
         val preset = Preset(
             name = record.presetName,
             state = testState,
-            emitMode = EmitMode.SEQUENTIAL,
             carrierFreqHz = record.freqHz
         )
         val saved = presetStore.upsert(preset)

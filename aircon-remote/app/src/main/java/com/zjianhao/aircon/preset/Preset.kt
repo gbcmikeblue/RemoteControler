@@ -3,39 +3,27 @@ package com.zjianhao.aircon.preset
 import com.zjianhao.aircon.ir.electra.ElectraSpec
 import com.zjianhao.aircon.ir.electra.ElectraState
 
-/** 指令下发方式。 */
-enum class EmitMode {
-    /** 需求 4.5：按 开机 → 睡眠 → 温度 → 定时 的顺序逐条下发 */
-    SEQUENTIAL,
-
-    /** 若状态码本身已包含全部信息，只发最终一帧 */
-    SINGLE_FRAME;
-
-    companion object {
-        fun fromName(name: String?): EmitMode = entries.firstOrNull { it.name == name } ?: SEQUENTIAL
-    }
-}
-
 /**
  * 一条预设。对应需求 F3「多预设管理」。
+ *
+ * Electra 是状态码协议：一帧就包含开关/模式/温度/风速的完整状态，
+ * 所以执行时只发一帧，不再拆成多步。
  *
  * [carrierFreqHz] 是该预设使用的红外载波频率，默认 38kHz；
  * 频率测试记录「应用为预设」时会把它覆盖成实测可用的频率。
  *
- * [rawCommands] 是"实测波形覆盖"：当 M2 校准出的真实脉冲序列与 [state] 推导结果不一致时，
- * 把实测数组填进来即可直接下发，无需改动协议层。
+ * [rawCommands] 是"实测波形覆盖"：拿到原装遥控器的实测微秒数组后填进来，
+ * 执行器会优先按实测波形下发，完全绕开协议编码。
  */
 data class Preset(
     val id: Long = 0L,
     val name: String,
     val state: ElectraState,
-    val emitMode: EmitMode = EmitMode.SEQUENTIAL,
     val carrierFreqHz: Int = ElectraSpec.CARRIER_FREQ_HZ,
     val rawCommands: List<IntArray> = emptyList()
 ) {
     val usesCalibratedRaw: Boolean get() = rawCommands.isNotEmpty()
 
-    /** 例如「38kHz」 */
     val carrierLabel: String
         get() = if (carrierFreqHz % 1000 == 0) {
             "${carrierFreqHz / 1000}kHz"

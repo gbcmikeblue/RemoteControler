@@ -18,6 +18,8 @@ import com.zjianhao.aircon.ir.TransmitResult
 import com.zjianhao.aircon.preset.Preset
 import com.zjianhao.aircon.preset.PresetExecutor
 import com.zjianhao.aircon.preset.PresetStore
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -30,11 +32,14 @@ class MainActivity : AppCompatActivity() {
 
     private var emitting = false
     private var supported = false
+    private var autoOffJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        WindowInsetsHelper.fitToolbarToStatusBar(binding.toolbar)
+        WindowInsetsHelper.fitBottomInset(binding.root)
 
         transmitter = IrTransmitter(this)
         store = PresetStore(this)
@@ -48,16 +53,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PresetEditActivity::class.java))
         }
 
-        binding.toolbar.inflateMenu(R.menu.menu_main)
-        binding.toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.action_frequency_test -> {
-                    startActivity(Intent(this, FrequencyTestActivity::class.java))
-                    true
-                }
-
-                else -> false
-            }
+        binding.btnFrequencyTest.setOnClickListener {
+            startActivity(Intent(this, FrequencyTestActivity::class.java))
+        }
+        binding.btnConfigCheck.setOnClickListener {
+            startActivity(Intent(this, RemoteConfigCheckActivity::class.java))
         }
 
         checkIrHardware()
@@ -68,6 +68,10 @@ class MainActivity : AppCompatActivity() {
     /** 仅 debug 包可用：`am start ... --es debug_open frequency_test` 直接跳转频率测试页。 */
     private fun handleDebugNavigation() {
         if (!BuildConfig.DEBUG) return
+        if (intent.getStringExtra(EXTRA_DEBUG_OPEN) == "config_check") {
+            startActivity(Intent(this, RemoteConfigCheckActivity::class.java))
+            return
+        }
         if (intent.getStringExtra(EXTRA_DEBUG_OPEN) == "frequency_test") {
             startActivity(
                 Intent(this, FrequencyTestActivity::class.java)
@@ -168,6 +172,31 @@ class MainActivity : AppCompatActivity() {
             }
             snack(binding.emitStatus.text.toString())
             emitting = false
+
+            if (result == TransmitResult.Success && preset.state.autoOffHours > 0) {
+                scheduleAutoOff(preset)
+            }
+        }
+    }
+
+    /**
+     * Electra 协议没有定时关机码，只能由 App 倒计时到点再发一帧关机状态。
+     * 注意：倒计时跟随界面生命周期，退出 App 后会失效。
+     */
+    private fun scheduleAutoOff(preset: Preset) {
+        val hours = preset.state.autoOffHours
+        autoOffJob?.cancel()
+        binding.emitStatus.text = getString(R.string.auto_off_scheduled, hours)
+        snack(getString(R.string.auto_off_scheduled, hours))
+
+        autoOffJob = lifecycleScope.launch {
+            delay(hours * 60L * 60L * 1000L)
+            val result = executor.sendPowerOff(preset)
+            binding.emitStatus.text = when (result) {
+                TransmitResult.Success -> getString(R.string.auto_off_fired, hours)
+                is TransmitResult.Failure -> getString(R.string.emit_failed, result.reason)
+            }
+            snack(binding.emitStatus.text.toString())
         }
     }
 

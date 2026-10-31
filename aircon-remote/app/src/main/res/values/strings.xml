@@ -18,6 +18,7 @@
 
     <!-- 预设 -->
     <string name="my_presets">我的预设</string>
+    <string name="section_tools">工具</string>
     <string name="emit">一键发射</string>
     <string name="emit_starting">正在发射「%1$s」</string>
     <string name="emit_done">发射完成，请听到「嘀」声后确认</string>
@@ -36,10 +37,12 @@
     <string name="label_name">预设名称</string>
     <string name="label_mode">运行模式</string>
     <string name="label_fan">风速</string>
-    <string name="label_sleep">睡眠模式</string>
+    <string name="label_sleep">静音模式（Electra 无睡眠字段，用静音近似）</string>
     <string name="temp_value">温度：%1$d℃</string>
-    <string name="timer_value">定时：%1$d 小时后自动关机</string>
-    <string name="timer_none">定时：不自动关机</string>
+    <string name="timer_value">定时关机：%1$d 小时后（App 内倒计时，需保持运行）</string>
+    <string name="timer_none">定时关机：不启用</string>
+    <string name="auto_off_scheduled">已设为 %1$d 小时后自动关机，请保持 App 在前台运行</string>
+    <string name="auto_off_fired">已按定时发送关机指令（%1$d 小时）</string>
 
     <string name="save">保存</string>
     <string name="cancel">取消</string>
@@ -78,4 +81,34 @@
     <string name="section_presets">③ 预设应用</string>
     <string name="section_presets_desc">点击下方预设即可直接发射；由频率记录生成的预设会使用实测载波。</string>
     <string name="preset_created">已创建预设「%1$s」，可在上方列表直接调用</string>
+
+    <!-- 万能遥控配置可获取性检测 -->
+    <string name="config_check_title">配置检测</string>
+    <string name="menu_config_check">配置检测</string>
+    <string name="probe_desc">检测本机能否读取「万能遥控」类应用保存的遥控配置。进入本页会自动检测一次，也可点下方按钮重新检测。</string>
+    <string name="probe_checking">正在检测…</string>
+    <string name="probe_recheck">重新检测</string>
+    <string name="probe_ok_title">可获取万能遥控配置</string>
+    <string name="probe_fail_title">无法获取万能遥控配置</string>
+    <string name="probe_summary">检测到 %1$d 个遥控类应用，解析到 %2$d 个配置条目</string>
+    <string name="probe_time">检测时间：%1$s</string>
+
+    <string name="probe_item_app">万能遥控类应用</string>
+    <string name="probe_app_none">未检测到已安装的遥控类应用</string>
+
+    <string name="probe_item_root">Root 权限</string>
+    <string name="probe_root_ok">已获取 root，可尝试访问其他应用私有目录</string>
+    <string name="probe_root_none">未获取 root。Android 从 4.1 起对应用私有目录强制沙箱隔离，普通应用无法读取</string>
+
+    <string name="probe_item_dir">私有配置目录访问</string>
+    <string name="probe_dir_ok">可读取：%1$s</string>
+    <string name="probe_dir_none">无法读取 /data/data/&lt;包名&gt;（EACCES：系统拒绝访问）</string>
+
+    <string name="probe_item_file">配置文件解析</string>
+    <string name="probe_file_ok">解析到 %1$d 个配置条目</string>
+    <string name="probe_file_none">解析到 %1$d 个配置条目</string>
+
+    <string name="probe_advice_title">为什么获取不到</string>
+    <string name="probe_advice_body">「万能遥控」类应用把码库保存在各自的私有目录（/data/data/&lt;包名&gt;/shared_prefs、files、databases）。Android 从 4.1（API 16）起对私有目录实施强制沙箱隔离，第三方应用即使知道包名也读不到。\n\n这不是权限没申请的问题——不存在任何可在 Manifest 声明或运行时申请获得的「读取其他应用数据」权限，只有 root 才能突破。</string>
+    <string name="probe_advice_note">替代方案：改用实测波形抓取。用带学习功能的红外接收模块录下原装遥控器的完整波形，转成微秒数组后通过预设的 rawCommands 导入，可直接绕开协议编码，可靠性高于推断码型。</string>
 </resources>
