@@ -1,9 +1,10 @@
 package com.zjianhao.aircon.preset
 
+import android.util.Log
 import com.zjianhao.aircon.ir.IrTransmitter
+import com.zjianhao.aircon.ir.PulsePattern
 import com.zjianhao.aircon.ir.TransmitResult
 import com.zjianhao.aircon.ir.electra.ElectraCodec
-import com.zjianhao.aircon.ir.electra.ElectraSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -44,10 +45,16 @@ class PresetExecutor(private val transmitter: IrTransmitter) {
             withContext(Dispatchers.Main) {
                 onStep("正在发射 ${index + 1}/${commands.size}：${command.label}")
             }
-            when (val result = transmitter.transmit(ElectraSpec.CARRIER_FREQ_HZ, command.pattern)) {
-                is TransmitResult.Failure -> return@withContext result
-                TransmitResult.Success -> Unit
-            }
+            val result = transmitter.transmit(preset.carrierFreqHz, command.pattern)
+            Log.i(
+                TAG,
+                "step ${index + 1}/${commands.size} [${command.label}] " +
+                    "carrier=${preset.carrierFreqHz}Hz " +
+                    "segments=${command.pattern.size} " +
+                    "durationUs=${PulsePattern.totalDurationUs(command.pattern)} " +
+                    "result=$result"
+            )
+            if (result is TransmitResult.Failure) return@withContext result
             if (index != commands.lastIndex) delay(commandIntervalMs)
         }
         TransmitResult.Success
@@ -98,5 +105,6 @@ class PresetExecutor(private val transmitter: IrTransmitter) {
 
     private companion object {
         const val BASE_TEMPERATURE = 26
+        const val TAG = "PresetExecutor"
     }
 }

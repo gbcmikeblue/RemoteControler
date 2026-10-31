@@ -44,4 +44,38 @@
     <string name="save">保存</string>
     <string name="cancel">取消</string>
     <string name="delete">删除</string>
+
+    <!-- 频率测试与记录 -->
+    <string name="freq_test_title">红外频率测试</string>
+    <string name="menu_frequency_test">频率测试</string>
+
+    <string name="tab_test">① 测试</string>
+    <string name="tab_records">② 成功记录</string>
+    <string name="tab_presets">③ 预设应用</string>
+
+    <string name="section_test">① 测试</string>
+    <string name="section_test_desc">选择载波频率后发射一次测试信号，用空调是否响应来判断该频率是否可用。</string>
+    <string name="freq_selected">当前测试频率：%1$s</string>
+    <string name="action_test_emit">发射测试信号</string>
+    <string name="test_emitting">正在以 %1$s 发射测试信号…</string>
+    <string name="test_emitted">已发射 %1$s 测试信号，请确认空调是否响应</string>
+
+    <string name="test_result_title">本次测试是否成功？</string>
+    <string name="test_result_message">请确认空调是否响应了 %1$s 的测试信号。\n选择「成功」才会保存该频率记录。</string>
+    <string name="test_result_success">成功，保存记录</string>
+    <string name="test_result_failure">失败，不保存</string>
+    <string name="test_result_discarded">本次测试未通过，未保存</string>
+    <string name="test_record_discarded">已丢弃本次测试结果</string>
+    <string name="test_record_saved">已保存 %1$s 成功记录</string>
+
+    <string name="section_records">② 成功记录</string>
+    <string name="section_records_desc">仅展示确认成功的频率，长按可删除。</string>
+    <string name="records_empty">暂无记录</string>
+    <string name="action_apply_preset">应用为预设</string>
+    <string name="record_delete_title">删除记录</string>
+    <string name="record_delete_message">确定删除 %1$s 的测试记录？</string>
+
+    <string name="section_presets">③ 预设应用</string>
+    <string name="section_presets_desc">点击下方预设即可直接发射；由频率记录生成的预设会使用实测载波。</string>
+    <string name="preset_created">已创建预设「%1$s」，可在上方列表直接调用</string>
 </resources>

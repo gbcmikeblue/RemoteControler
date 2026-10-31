@@ -2,12 +2,14 @@ package com.zjianhao.aircon.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.zjianhao.aircon.BuildConfig
 import com.zjianhao.aircon.R
 import com.zjianhao.aircon.databinding.ActivityMainBinding
 import com.zjianhao.aircon.ir.IrAvailability
@@ -46,7 +48,57 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PresetEditActivity::class.java))
         }
 
+        binding.toolbar.inflateMenu(R.menu.menu_main)
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_frequency_test -> {
+                    startActivity(Intent(this, FrequencyTestActivity::class.java))
+                    true
+                }
+
+                else -> false
+            }
+        }
+
         checkIrHardware()
+        handleDebugNavigation()
+        handleDebugEmit()
+    }
+
+    /** 仅 debug 包可用：`am start ... --es debug_open frequency_test` 直接跳转频率测试页。 */
+    private fun handleDebugNavigation() {
+        if (!BuildConfig.DEBUG) return
+        if (intent.getStringExtra(EXTRA_DEBUG_OPEN) == "frequency_test") {
+            startActivity(
+                Intent(this, FrequencyTestActivity::class.java)
+                    .putExtra(
+                        FrequencyTestActivity.EXTRA_DEBUG_AUTO,
+                        intent.getBooleanExtra("debug_auto", false)
+                    )
+                    .putExtra(
+                        FrequencyTestActivity.EXTRA_DEBUG_TAB,
+                        intent.getIntExtra("debug_tab", -1)
+                    )
+            )
+        }
+    }
+
+    /**
+     * 仅 debug 包可用：通过 `am start ... --el debug_emit_preset_id <id>` 直接触发一次发射。
+     * 用于真机自动化验证（HyperOS 会拦截 adb input 注入，无法点击）。
+     */
+    private fun handleDebugEmit() {
+        if (!BuildConfig.DEBUG) return
+        val presetId = intent.getLongExtra(EXTRA_DEBUG_EMIT_PRESET, -1L)
+        if (presetId <= 0) return
+
+        val preset = store.find(presetId)
+        if (preset == null) {
+            Log.w(TAG, "debug emit: preset $presetId 不存在")
+            return
+        }
+        Log.i(TAG, "debug emit: 触发预设 ${preset.name}")
+        binding.root.post { emitPreset(preset) }
     }
 
     override fun onResume() {
@@ -133,5 +185,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun snack(message: String) {
         Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+    }
+
+    private companion object {
+        const val TAG = "MainActivity"
+        const val EXTRA_DEBUG_EMIT_PRESET = "debug_emit_preset_id"
+        const val EXTRA_DEBUG_OPEN = "debug_open"
     }
 }

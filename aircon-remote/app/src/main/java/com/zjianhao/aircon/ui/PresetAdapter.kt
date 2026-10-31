@@ -39,7 +39,7 @@ class PresetAdapter(
 
         fun bind(preset: Preset) {
             binding.presetName.text = preset.name
-            binding.presetSummary.text = preset.state.summary()
+            binding.presetSummary.text = "${preset.carrierLabel} · ${preset.state.summary()}"
             binding.presetRawHint.visibility =
                 if (preset.usesCalibratedRaw) View.VISIBLE else View.GONE
 

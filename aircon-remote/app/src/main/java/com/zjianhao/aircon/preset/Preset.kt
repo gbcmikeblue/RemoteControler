@@ -1,5 +1,6 @@
 package com.zjianhao.aircon.preset
 
+import com.zjianhao.aircon.ir.electra.ElectraSpec
 import com.zjianhao.aircon.ir.electra.ElectraState
 
 /** 指令下发方式。 */
@@ -18,6 +19,9 @@ enum class EmitMode {
 /**
  * 一条预设。对应需求 F3「多预设管理」。
  *
+ * [carrierFreqHz] 是该预设使用的红外载波频率，默认 38kHz；
+ * 频率测试记录「应用为预设」时会把它覆盖成实测可用的频率。
+ *
  * [rawCommands] 是"实测波形覆盖"：当 M2 校准出的真实脉冲序列与 [state] 推导结果不一致时，
  * 把实测数组填进来即可直接下发，无需改动协议层。
  */
@@ -26,7 +30,18 @@ data class Preset(
     val name: String,
     val state: ElectraState,
     val emitMode: EmitMode = EmitMode.SEQUENTIAL,
+    val carrierFreqHz: Int = ElectraSpec.CARRIER_FREQ_HZ,
     val rawCommands: List<IntArray> = emptyList()
 ) {
     val usesCalibratedRaw: Boolean get() = rawCommands.isNotEmpty()
+
+    /** 例如「38kHz」 */
+    val carrierLabel: String
+        get() = if (carrierFreqHz % 1000 == 0) {
+            "${carrierFreqHz / 1000}kHz"
+        } else {
+            "${carrierFreqHz / 1000.0}kHz"
+        }
+
+    val usesCustomCarrier: Boolean get() = carrierFreqHz != ElectraSpec.CARRIER_FREQ_HZ
 }

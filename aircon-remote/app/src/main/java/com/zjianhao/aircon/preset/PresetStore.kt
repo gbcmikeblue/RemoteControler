@@ -2,6 +2,7 @@ package com.zjianhao.aircon.preset
 
 import android.content.Context
 import com.zjianhao.aircon.ir.electra.AcMode
+import com.zjianhao.aircon.ir.electra.ElectraSpec
 import com.zjianhao.aircon.ir.electra.ElectraState
 import com.zjianhao.aircon.ir.electra.FanSpeed
 import org.json.JSONArray
@@ -72,6 +73,7 @@ class PresetStore(context: Context) {
         put("id", preset.id)
         put("name", preset.name)
         put("emitMode", preset.emitMode.name)
+        put("carrierFreqHz", preset.carrierFreqHz)
         put("state", JSONObject().apply {
             put("power", preset.state.power)
             put("mode", preset.state.mode.name)
@@ -116,6 +118,7 @@ class PresetStore(context: Context) {
             name = json.optString("name", "未命名预设"),
             state = state,
             emitMode = EmitMode.fromName(json.optString("emitMode")),
+            carrierFreqHz = json.optInt("carrierFreqHz", ElectraSpec.CARRIER_FREQ_HZ),
             rawCommands = rawCommands
         )
     }
